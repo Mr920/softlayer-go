@@ -47,6 +47,8 @@ const DefaultEndpoint = "https://api.softlayer.com/rest/v3"
 
 var retryableErrorCodes = []string{"SoftLayer_Exception_WebService_RateLimitExceeded"}
 
+var requestNum int = 0
+
 // TransportHandler interface for the protocol-specific handling of API requests.
 type TransportHandler interface {
 	// DoRequest is the protocol-specific handler for making API requests.
@@ -143,6 +145,7 @@ type Session struct {
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	log.Println("session.go : init()")
 }
 
 // New creates and returns a pointer to a new session object.  It takes up to
@@ -157,6 +160,7 @@ func init() {
 // If one or more are omitted, New() will attempt to retrieve these values from
 // the environment, and the ~/.softlayer config file, in that order.
 func New(args ...interface{}) *Session {
+	//log.Println("session.go : New()")
 	keys := map[string]int{"username": 0, "api_key": 1, "endpoint_url": 2, "timeout": 3}
 	values := []string{"", "", "", ""}
 
@@ -247,16 +251,18 @@ func New(args ...interface{}) *Session {
 //
 // For a description of parameters, see TransportHandler.DoRequest in this package
 func (r *Session) DoRequest(service string, method string, args []interface{}, options *sl.Options, pResult interface{}) error {
+	//log.Println("session.go : DoRequest()")
 	if r.TransportHandler == nil {
 		r.TransportHandler = getDefaultTransport(r.Endpoint)
 	}
-
+	requestNum += 1
 	return r.TransportHandler.DoRequest(r, service, method, args, options, pResult)
 }
 
 // SetTimeout creates a copy of the session and sets the passed timeout into it
 // before returning it.
 func (r *Session) SetTimeout(timeout time.Duration) *Session {
+	//log.Println("session.go : SetTimeout()")
 	var s Session
 	s = *r
 	s.Timeout = timeout
@@ -267,6 +273,7 @@ func (r *Session) SetTimeout(timeout time.Duration) *Session {
 // SetRetries creates a copy of the session and sets the passed retries into it
 // before returning it.
 func (r *Session) SetRetries(retries int) *Session {
+	//log.Println("session.go : SetRetries()")
 	var s Session
 	s = *r
 	s.Retries = retries
@@ -277,6 +284,7 @@ func (r *Session) SetRetries(retries int) *Session {
 // SetRetryWait creates a copy of the session and sets the passed retryWait into it
 // before returning it.
 func (r *Session) SetRetryWait(retryWait time.Duration) *Session {
+	//log.Println("session.go : SetRetryWait()")
 	var s Session
 	s = *r
 	s.RetryWait = retryWait
@@ -287,6 +295,7 @@ func (r *Session) SetRetryWait(retryWait time.Duration) *Session {
 // AppendUserAgent allows higher level application to identify themselves by
 // appending to the useragent string
 func (r *Session) AppendUserAgent(agent string) {
+	//log.Println("session.go : AppendUserAgent()")
 	if r.userAgent == "" {
 		r.userAgent = getDefaultUserAgent()
 	}
@@ -308,6 +317,7 @@ func envFallback(keyName string, value *string) {
 }
 
 func getDefaultTransport(endpointURL string) TransportHandler {
+	//log.Println("session.go : getDefaultTransport()")
 	var transportHandler TransportHandler
 
 	if strings.Contains(endpointURL, "/xmlrpc/") {

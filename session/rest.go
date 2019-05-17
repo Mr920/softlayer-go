@@ -28,10 +28,22 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"os"
+	"log"
 	"github.com/softlayer/softlayer-go/datatypes"
 	"github.com/softlayer/softlayer-go/sl"
 )
+
+
+
+
+
+
+
+func init() {
+	// initialize the logger used by the session package.
+	Logger = log.New(os.Stderr, "", log.LstdFlags)
+}
 
 type RestTransport struct{}
 
@@ -168,7 +180,7 @@ func encodeQuery(opts *sl.Options) string {
 func sendHTTPRequest(
 	sess *Session, path string, requestType string,
 	requestBody *bytes.Buffer, options *sl.Options) ([]byte, int, error) {
-
+	//log.Println("rest.go    : sendHTTPRequest()")
 	retries := sess.Retries
 	if retries < 2 {
 		return makeHTTPRequest(sess, path, requestType, requestBody, options)
@@ -209,7 +221,7 @@ func makeHTTPRequest(
 	session *Session, path string, requestType string,
 	requestBody *bytes.Buffer, options *sl.Options) ([]byte, int, error) {
 	log := Logger
-
+	//log.Println("rest.go    : makeHTTPRequest()")
 	client := session.HTTPClient
 	if client == nil {
 		client = &http.Client{}
@@ -255,6 +267,12 @@ func makeHTTPRequest(
 	}
 
 	req.URL.RawQuery = encodeQuery(options)
+	
+	log.Println("len(req.URL.RawQuery) == ", len(req.URL.RawQuery))
+	if (len(req.URL.RawQuery) == 0){
+		req.URL.RawQuery = fmt.Sprintf("debug=true&reqNum=%d", requestNum)
+	}
+	log.Println("req.URL.RawQuery = ", req.URL.RawQuery)
 
 	if session.Debug {
 		log.Println("[DEBUG] Request URL: ", requestType, req.URL)
